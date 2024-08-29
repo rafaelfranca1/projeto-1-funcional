@@ -9,7 +9,7 @@ defmodule Songapp do
   - `get_lyrics/1`: Retorna a letra de uma música.
   - `ranking_hoje/0`: Obtém o ranking de hoje de músicas do site Genius.
   """
-  
+
   @api_url "https://api.genius.com/search"
   @api_key "KA4XOUPd0ERQumuJmB2lE1j24oRF_MOLVjBzB_2QSPibp4d0OEv1awCUsnJSuo0b"
   @header [{"Authorization", "Bearer #{@api_key}"}]
@@ -77,10 +77,15 @@ defmodule Songapp do
           regex2 = ~r/\d+Contributors/
 
           [lyrics_final1 | _] = String.split(lyrics, regex1, parts: 2)
-          [lyrics_final2 | _] = String.split(lyrics_final1, regex2, parts: 2)
-          [lyrics_final3 | _] = String.split(lyrics_final2, "[Outro]", parts: 2)
+          [lyrics_final1 | _] = String.split(lyrics_final1, regex2, parts: 2)
+          [lyrics_final1 | _] = String.split(lyrics_final1, "[Outro]", parts: 2)
+          [lyrics_final1 | _] = String.split(lyrics_final1, "Read More", parts: 2)
 
-          IO.puts("\n\nLetra extraída:\n\n #{lyrics_final3}")
+          mapa = extract_song_info(decoded_body)
+
+          IO.puts("\n\nArtista: #{mapa[:artist]}")
+          IO.puts("Título: #{mapa[:title]}")
+          IO.puts("\nLetra:\n\n #{lyrics_final1}")
 
           # {:ok, lyrics_final}
         else
