@@ -15,14 +15,43 @@ defmodule Songapp do
   @header [{"Authorization", "Bearer #{@api_key}"}]
 
   def search_song(query) do
+    search_song(query, [], 0)
+  end
+
+  defp search_song(_query, _retrieved_songs, attempts) when attempts >= 8 do
+    IO.puts("Número máximo de tentativas atingido. Por gentileza, tente ser mais específico na próxima vez.")
+    {:error, "Número máximo de tentativas atingido. Não foi possível encontrar uma música correspondente."}
+  end
+
+  defp search_song(query, retrieved_songs, attempts) do
     encoded_query = URI.encode(query)
     url = "#{@api_url}?q=#{encoded_query}"
 
     case HTTPoison.get(url, @header, follow_redirect: true) do
       {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
-        case Poison.decode(body) do
+        case Jason.decode(body) do
           {:ok, decoded_body} ->
-            extract_song_info(decoded_body)
+            songs = extract_song_info(decoded_body)
+
+            case find_new_song(songs, retrieved_songs) do
+              {:ok, song} ->
+                IO.puts("Encontrei a música: #{song[:title]} - #{song[:artist]}")
+                IO.puts("Esta é a música que você procurava? (s/n)")
+                case IO.gets("> ") |> String.trim() do
+                  "s" -> {:ok, song}
+                  "n" ->
+                    IO.puts("Procurando outra música...")
+                    search_song(query, [song | retrieved_songs], attempts + 1)
+                  _ ->
+                    IO.puts("Resposta inválida. Tente novamente.")
+                    search_song(query, retrieved_songs, attempts)
+                end
+
+              :error ->
+                IO.puts("Nenhuma nova música encontrada. Tentando novamente...")
+                search_song(query, retrieved_songs, attempts + 1)
+            end
+
           {:error, error} ->
             IO.puts("Erro ao decodificar JSON: #{inspect(error)}")
             {:error, {:invalid_json, error}}
@@ -39,7 +68,53 @@ defmodule Songapp do
     end
   end
 
-  defp extract_song_info(%{"response" => %{"hits" => [hit | _]}}) do
+  defp find_new_song(songs, retrieved_songs) do
+    case Enum.find(songs, fn song -> song not in retrieved_songs end) do
+      nil -> :error
+      song -> {:ok, song}
+    end
+  end
+
+  defp extract_song_info(%{"response" => %{"hits" => hits}}) do
+    Enum.map(hits, fn hit ->
+      result = hit["result"]
+      %{
+        title: result["title"],
+        artist: result["primary_artist"]["name"],
+        release_date: result["release_date_for_display"],
+        song_url: result["url"]
+      }
+    end)
+  end
+
+  defp extract_song_info(_), do: []
+
+  # def search_song(query) do
+  #   encoded_query = URI.encode(query)
+  #   url = "#{@api_url}?q=#{encoded_query}"
+
+  #   case HTTPoison.get(url, @header, follow_redirect: true) do
+  #     {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
+  #       case Poison.decode(body) do
+  #         {:ok, decoded_body} ->
+  #           extract_song_info(decoded_body)
+  #         {:error, error} ->
+  #           IO.puts("Erro ao decodificar JSON: #{inspect(error)}")
+  #           {:error, {:invalid_json, error}}
+  #       end
+
+  #     {:ok, %HTTPoison.Response{status_code: status_code, body: body}} ->
+  #       IO.puts("Erro HTTP: #{status_code}")
+  #       IO.puts("Corpo da Resposta: #{body}")
+  #       {:error, {:http_error, status_code, body}}
+
+  #     {:error, error} ->
+  #       IO.puts("Falha na requisição: #{inspect(error)}")
+  #       {:error, {:request_failed, error}}
+  #   end
+  # end
+
+  defp extract_song_info2(%{"response" => %{"hits" => [hit | _]}}) do
     result = hit["result"]
 
     %{
@@ -50,12 +125,15 @@ defmodule Songapp do
     }
   end
 
-  defp extract_song_info(_), do: {:error, "Nenhuma música encontrada"}
+  # defp extract_song_info(_), do: {:error, "Nenhuma música encontrada"}
 
   @doc """
   Retorna a letra da música
   """
   def get_lyrics(song_name) do
+    {:ok, mp} = search_song(song_name)
+    song_name = mp[:title] <> " " <> mp[:artist]
+
     encoded_query = URI.encode_www_form(song_name)
     url = "#{@api_url}?q=#{encoded_query}"
 
@@ -81,7 +159,7 @@ defmodule Songapp do
           [lyrics_final1 | _] = String.split(lyrics_final1, "[Outro]", parts: 2)
           [lyrics_final1 | _] = String.split(lyrics_final1, "Read More", parts: 2)
 
-          mapa = extract_song_info(decoded_body)
+          mapa = extract_song_info2(decoded_body)
 
           IO.puts("\n\nArtista: #{mapa[:artist]}")
           IO.puts("Título: #{mapa[:title]}")
