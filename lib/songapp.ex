@@ -1,4 +1,15 @@
 defmodule Songapp do
+  @moduledoc """
+  Módulo Songapp
+
+  Este módulo é um projeto que utiliza a API do site Genius para buscar informações sobre músicas, incluindo letras e rankings diários.
+
+  Funções principais:
+  - `search_song/1`: Busca informações sobre uma música específica.
+  - `get_lyrics/1`: Retorna a letra de uma música.
+  - `ranking_hoje/0`: Obtém o ranking de hoje de músicas do site Genius.
+  """
+  
   @api_url "https://api.genius.com/search"
   @api_key "KA4XOUPd0ERQumuJmB2lE1j24oRF_MOLVjBzB_2QSPibp4d0OEv1awCUsnJSuo0b"
   @header [{"Authorization", "Bearer #{@api_key}"}]
@@ -128,11 +139,28 @@ defmodule Songapp do
   end
 
   @doc """
-    Retorna chart diario
+  Obtém o ranking de hoje de músicas do site Genius.
+
+  Exemplo:
+  iex> Songapp.ranking_hoje
+  [
+    %{
+      rank: "1",
+      title: "Song Title 1",
+      artist: "Artist 1",
+      url: "https://genius.com/song-title-1-lyrics"
+    },
+    %{
+      rank: "2",
+      title: "Song Title 2",
+      artist: "Artist 2",
+      url: "https://genius.com/song-title-2-lyrics"
+    },
+    ...
+  ]
   """
-  def charts_day do
+  def ranking_hoje do
     url = "https://genius.com/"
-    # {:ok, %HTTPoison.Response{body: body}} = HTTPoison.get("https://genius.com/")
 
     case HTTPoison.get(url) do
       {:ok, %HTTPoison.Response{body: body}} ->
@@ -140,10 +168,12 @@ defmodule Songapp do
           {:ok, document} ->
             chart_items = Floki.find(document, ".ChartItemdesktop__Row-sc-3bmioe-0")
             music_list = Enum.map(chart_items, fn item ->
-              [{:rank, Floki.find(item, ".ChartItemdesktop__Rank-sc-3bmioe-1") |> Floki.text()},
-               {:title, Floki.find(item, ".ChartSongdesktop__Title-sc-18658hh-3") |> Floki.text()},
-               {:artist, Floki.find(item, ".ChartSongdesktop__Artist-sc-18658hh-5") |> Floki.text()},
-               {:url, Floki.find(item, "a") |> Floki.attribute("href") |> List.first()}]
+              [
+                {:rank, Floki.find(item, ".ChartItemdesktop__Rank-sc-3bmioe-1") |> Floki.text()},
+                {:title, Floki.find(item, ".ChartSongdesktop__Title-sc-18658hh-3") |> Floki.text()},
+                {:artist, Floki.find(item, ".ChartSongdesktop__Artist-sc-18658hh-5") |> Floki.text()},
+                {:url, Floki.find(item, "a") |> Floki.attribute("href") |> List.first()}
+              ]
             end)
 
             music_list
