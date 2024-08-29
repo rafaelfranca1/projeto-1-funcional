@@ -132,6 +132,7 @@ defmodule Songapp do
   """
   def charts_day do
     url = "https://genius.com/"
+    # {:ok, %HTTPoison.Response{body: body}} = HTTPoison.get("https://genius.com/")
 
     case HTTPoison.get(url) do
       {:ok, %HTTPoison.Response{body: body}} ->
@@ -139,12 +140,10 @@ defmodule Songapp do
           {:ok, document} ->
             chart_items = Floki.find(document, ".ChartItemdesktop__Row-sc-3bmioe-0")
             music_list = Enum.map(chart_items, fn item ->
-              %{
-                rank: Floki.find(item, ".ChartItemdesktop__Rank-sc-3bmioe-1") |> Floki.text(),
-                title: Floki.find(item, ".ChartSongdesktop__Title-sc-18658hh-3") |> Floki.text(),
-                artist: Floki.find(item, ".ChartSongdesktop__Artist-sc-18658hh-5") |> Floki.text(),
-                url: Floki.find(item, "a") |> Floki.attribute("href") |> List.first()
-              }
+              [{:rank, Floki.find(item, ".ChartItemdesktop__Rank-sc-3bmioe-1") |> Floki.text()},
+               {:title, Floki.find(item, ".ChartSongdesktop__Title-sc-18658hh-3") |> Floki.text()},
+               {:artist, Floki.find(item, ".ChartSongdesktop__Artist-sc-18658hh-5") |> Floki.text()},
+               {:url, Floki.find(item, "a") |> Floki.attribute("href") |> List.first()}]
             end)
 
             music_list
