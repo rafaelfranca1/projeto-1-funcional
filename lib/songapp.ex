@@ -126,5 +126,34 @@ defmodule Songapp do
     |> Enum.reject(&String.contains?(&1, ["Sign Up", "Get tickets", "You might also like", "See Eminem Live", "Embed", "Cancel", "How to Format Lyrics", "Type out all lyrics", "Use section headers", "Use italics", "To learn more", "About", "Genius Annotation", "Share", "Q&A", "Find answers", "Ask a question", "Genius Answer", "It won’t appear", "When did", "Who wrote", "Greatish Hits", "Expand", "Credits", "Writer", "Release Date", "Real Love Baby Covers", "Real Love Baby Translations", "Tags", "Comments", "Sign Up", "Genius is the ultimate source", "Sign In", "Do Not Sell", "Terms of Use", "Verified Artists", "All Artists", "Hot Songs"]))
     |> Enum.join("\n")
   end
-  
+
+  @doc """
+    Retorna chart diario
+  """
+  def charts_day do
+    url = "https://genius.com/"
+
+    case HTTPoison.get(url) do
+      {:ok, %HTTPoison.Response{body: body}} ->
+        case Floki.parse_document(body) do
+          {:ok, document} ->
+            chart_items = Floki.find(document, ".ChartItemdesktop__Row-sc-3bmioe-0")
+            music_list = Enum.map(chart_items, fn item ->
+              %{
+                rank: Floki.find(item, ".ChartItemdesktop__Rank-sc-3bmioe-1") |> Floki.text(),
+                title: Floki.find(item, ".ChartSongdesktop__Title-sc-18658hh-3") |> Floki.text(),
+                artist: Floki.find(item, ".ChartSongdesktop__Artist-sc-18658hh-5") |> Floki.text(),
+                url: Floki.find(item, "a") |> Floki.attribute("href") |> List.first()
+              }
+            end)
+
+            music_list
+          {:error, reason} ->
+            {:error, "Failed to parse HTML: #{reason}"}
+        end
+      {:error, %HTTPoison.Error{reason: reason}} ->
+        {:error, "Failed to fetch the page: #{reason}"}
+    end
+  end
+
 end

@@ -27,7 +27,8 @@ defmodule Songapp.MixProject do
   defp deps do
     [
       {:httpoison, "~> 2.1"},
-      {:poison, "~> 5.0"}    
+      {:poison, "~> 5.0"},
+      {:floki, "~> 0.36.2"}
     ]
   end
 end
