@@ -1,6 +1,8 @@
 defmodule SongAssociation do
+
+  import Songapp
+
   # Este modulo contem as funcoes necessarias para o jogo SongAssociation Game
-  import songapp
 
   @doc """
     Funcao responsavel por iniciar e rodar o jogo SongAssociation
@@ -16,6 +18,8 @@ defmodule SongAssociation do
     IO.puts("\nJogadores cadastrados:")
     Enum.each(jogadores, fn {nome, pontos} -> IO.puts("#{nome} - #{pontos} pontos") end)
 
+    # Inicia a rodada
+    startRound(jogadores)
   end
 
 
@@ -41,9 +45,17 @@ defmodule SongAssociation do
   end
 
   defp readArchive() do
-    # Lê o arquivo de palavras
-    File.read!("words.txt")
-    |> String.split("\n")
+    # Tenta ler o arquivo de palavras
+    case File.read("C:/Users/lucas/OneDrive/Área de Trabalho/projeto-1-funcional/lib/words.txt") do
+      {:ok, content} ->
+        content
+        |> String.split("\n")
+        |> Enum.filter(&(&1 != "")) # Remove linhas vazias
+
+      {:error, reason} ->
+        IO.puts("Erro ao ler o arquivo: #{reason}")
+        []
+    end
   end
 
   defp porRodadas(jogadores, palavras) do
@@ -68,7 +80,7 @@ defmodule SongAssociation do
         else
           if String.contains?(lyrics, palavra) do
             IO.puts("Palavra válida! +1 ponto para #{nome}")
-            jogadores[nome] = jogadores[nome] + 1
+            Map.put(jogadores, nome, jogadores[nome] + 1)
           else
             IO.puts("Palavra inválida! #{nome} perdeu a rodada.")
             Enum.each(jogadores, fn {nome, pontos} -> IO.puts("#{nome} - #{pontos} pontos") end)
@@ -100,7 +112,7 @@ defmodule SongAssociation do
           else
             if String.contains?(lyrics, palavra) do
               IO.puts("Palavra válida! +1 ponto para #{nome}")
-              jogadores[nome] = jogadores[nome] + 1
+              Map.put(jogadores, nome, jogadores[nome] + 1)
             else
               IO.puts("Palavra inválida! #{nome} perdeu a rodada.")
               Enum.each(jogadores, fn {nome, pontos} -> IO.puts("#{nome} - #{pontos} pontos") end)
@@ -117,7 +129,7 @@ defmodule SongAssociation do
     banco = readArchive()
     # Pega 5 palavras aleatórias e sem repetições para cada jogador
     palavras_jogadores =
-      Enum.map(jogadores, fn {nome, pontos} ->
+      Enum.map(jogadores, fn {nome, _pontos} ->
         {nome, Enum.take_random(banco, 5)}
       end)
 
@@ -151,9 +163,6 @@ defmodule SongAssociation do
       1 -> porRodadas(jogadores, palavras_jogadores)
       2 -> porJogador(jogadores, palavras_jogadores)
       _ ->  IO.puts("Modo inválido! Tente novamente.")
-            IO.puts("Selecione o modo de jogo:\n1. Por rodadas\n2. Por jogador")
-            modo = IO.gets("> ") |> String.trim() |> String.to_integer()
-            startRound(jogadores)
     end
 
     # Mostra a pontuação final dos jogadores
