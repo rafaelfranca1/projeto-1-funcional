@@ -243,7 +243,7 @@ defmodule Songapp do
   ]
   """
   def ranking_hoje do
-    url = "https://genius.com/"
+    url = "https://genius.com"
 
     case HTTPoison.get(url) do
       {:ok, %HTTPoison.Response{body: body}} ->
