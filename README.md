@@ -1,21 +1,20 @@
-# Songapp
+# Song App
+────█▀█▄▄▄▄─────██▄───────────────────────
+    ────█▀▄▄▄▄█─────█▀▀█──╔══╦╦╦═╦╦═╗────────
+    ─▄▄▄█─────█──▄▄▄█─────║║║║║║╚╣║╔╝───────
+    ██▀▄█─▄██▀█─███▀█─────║║║║║╠╗║║╚╗─────
+    ─▀▀▀──▀█▄█▀─▀█▄█▀─────╚╩╩╩═╩═╩╩═╝───
+    ──────────────────────────────────
+## Descrição
 
-**TODO: Add description**
+Projeto que utiliza a API do site Genius para buscar informações sobre músicas.
 
-## Installation
+## Autores
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `songapp` to your list of dependencies in `mix.exs`:
+Conheça os desenvolvedores por trás do Pokemon Battle Simulator:
 
-```elixir
-def deps do
-  [
-    {:songapp, "~> 0.1.0"}
-  ]
-end
-```
-
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at <https://hexdocs.pm/songapp>.
-
+- [João Marcos](https://github.com/j4marcos)
+- [Kaique Bezerra](https://github.com/KaiqueSantos2004)
+- [Lucas Gabriel](https://github.com/LucasGabrielFontes)
+- [Luis Reis](https://github.com/LuisReis09)
+- [Rafael de França](https://github.com/rafaelfranca1)
