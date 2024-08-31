@@ -297,7 +297,7 @@ defp handle_response(%{
           |> String.trim()
 
           artista = if String.contains?(artista, "(feat.") do
-            artista <> ")"
+            artista <> ")"  
           else
             artista
           end
