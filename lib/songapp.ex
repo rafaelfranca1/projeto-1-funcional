@@ -247,25 +247,20 @@ defmodule Songapp do
 
     case HTTPoison.get(url) do
       {:ok, %HTTPoison.Response{body: body}} ->
-        case Floki.parse_document(body) do
-          {:ok, document} ->
-            chart_items = Floki.find(document, ".ChartItemdesktop__Row-sc-3bmioe-0")
-            music_list = Enum.map(chart_items, fn item ->
+            Regex.scan(~r/<a href="([^"]+)" class="PageGriddesktop-hg04e9-0 ChartItemdesktop__Row-sc-3bmioe-0 [^"]+">.*?<div class="ChartItemdesktop__Rank-sc-3bmioe-1 [^"]+">([^<]+)<\/div>.*?<div class="ChartSongdesktop__Title-sc-18658hh-3 [^"]+">([^<]+)<\/div>.*?<h4 class="ChartSongdesktop__Artist-sc-18658hh-5 [^"]+">([^<]+)<\/h4>/s, body)
+            |> map(fn [_, link, rank, song_name, artist] ->
               [
-                {:rank, Floki.find(item, ".ChartItemdesktop__Rank-sc-3bmioe-1") |> Floki.text()},
-                {:title, Floki.find(item, ".ChartSongdesktop__Title-sc-18658hh-3") |> Floki.text()},
-                {:artist, Floki.find(item, ".ChartSongdesktop__Artist-sc-18658hh-5") |> Floki.text()},
-                {:url, Floki.find(item, "a") |> Floki.attribute("href") |> List.first()}
+                rank: String.trim(rank),
+                song_name: String.trim(song_name),
+                artist: String.replace(artist, "&amp;", "&") |> String.trim(),
+                link: link
               ]
             end)
-
-            music_list
-          {:error, reason} ->
-            {:error, "Failed to parse HTML: #{reason}"}
-        end
       {:error, %HTTPoison.Error{reason: reason}} ->
         {:error, "Failed to fetch the page: #{reason}"}
     end
   end
 
+  defp map([], _f), do: []
+  defp map([head | tail], f), do: [f.(head) | map(tail, f)]
 end
