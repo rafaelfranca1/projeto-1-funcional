@@ -20,10 +20,10 @@ defmodule SongAssociation do
 
     # Cadastra os jogadores
     qtd_jogadores = getQuantidadeJogadores()
-    jogadores = cadastraJogadores(qtd_jogadores)
+    jogadores = cadastraJogadores(qtd_jogadores, qtd_jogadores)
 
     # Mostra os jogadores cadastrados e suas pontuacoes
-    IO.puts("\nJogadores cadastrados:")
+    IO.puts("\nJogadores cadastrados: ")
     Enum.each(jogadores, fn player -> IO.puts(player) end)
 
     # Inicia a rodada
@@ -31,6 +31,7 @@ defmodule SongAssociation do
   end
 
   defp getQuantidadeJogadores() do
+    IO.puts("\nDigite a quantidade de jogadores [2-10]")
     qtd_jogadores = IO.gets("> ") |> String.trim() |> String.to_integer()
 
     if qtd_jogadores < 2 or qtd_jogadores > 10 do
@@ -41,8 +42,8 @@ defmodule SongAssociation do
     end
   end
 
-  defp cadastraJogadores(_org, 0), do: nil
-  defp cadastraPlayers(org, x) do
+  defp cadastraJogadores(_org, 0), do: []
+  defp cadastraJogadores(org, x) do
     IO.puts("Digite o nome do jogador #{x}: ")
     nome = IO.gets("> ") |> String.trim()
 
@@ -57,7 +58,7 @@ defmodule SongAssociation do
 
   defp readArchive() do
     # Tenta ler o arquivo de palavras
-    case File.read("C:/Users/66666/OneDrive/Área de Trabalho/projeto-1-funcional/lib/words.txt") do
+    case File.read("./words.txt") do
       {:ok, content} ->
         content
         |> String.split("\n")
@@ -65,14 +66,18 @@ defmodule SongAssociation do
 
       {:error, reason} ->
         IO.puts("Erro ao ler o arquivo: #{reason}")
-        []
+        {:error}
     end
   end
 
-  defp porJogador( jogadoresData ) do
-    # Inicia a rodada
-    Enum.each(palavras, fn {nome, palavras} ->
+  defp porJogador(palavras_jogadores) do
+  # Inicia a rodada
+  jogadores = Map.new()
+
+  Enum.each(palavras_jogadores, fn jogador ->
+    Enum.each(jogador, fn {nome, palavras} ->
       IO.puts("\nVez de #{nome}!")
+
       Enum.each(palavras, fn palavra ->
         IO.puts("\nPalavra: #{palavra}")
         IO.puts("Digite o artista: ")
@@ -82,31 +87,28 @@ defmodule SongAssociation do
 
         input = "#{artista} - #{nome_musica}"
         if artista == "" or nome_musica == "" do
-          IO.puts("Entrada invalida, digite artistas/musicas validos. Rodada perdida.")
+          IO.puts("Entrada inválida, digite artistas/músicas válidos. Rodada perdida.")
         else
-          {flag, lyricsin} = Songapp.get_lyrics2(input)
+          {flag, lyricsin} = Songapp.get_lyrics(input)
           lyrics = String.downcase(lyricsin)
           if flag == :error do
             IO.puts("Erro ao obter as letras da música. Rodada perdida.")
           else
             if String.contains?(lyrics, palavra) do
               IO.puts("Palavra válida! +1 ponto para #{nome}")
-              Map.put(jogadores, nome, jogadores[nome] + 1)
+              # Atualiza o placar do jogador
+              jogadores = Map.update(jogadores, nome, 1, &(&1 + 1))
             else
               IO.puts("Palavra inválida! #{nome} perdeu a rodada.")
-              Enum.each(jogadores, fn {nome, pontos} -> IO.puts("#{nome} - #{pontos} pontos") end)
             end
           end
         end
       end)
     end)
+  end)
 
-    if palavras.len > 0  do
-      porJogador({
-        ...jogadores,
-        jogadores[jogadores|0] + 1
-      })
-    end
+    # Retorna o mapa atualizado com os pontos dos jogadores
+    jogadores
   end
 
 
@@ -114,44 +116,29 @@ defmodule SongAssociation do
     IO.puts("\n\nRodada iniciada!")
 
     banco = readArchive()
-    # Pega 5 palavras aleatórias e sem repetições para cada jogador
-    palavras_jogadores = Enum.reduce(jogadores, %{}, fn {nome, _}, acc ->
-      palavras = Enum.take_random(banco, 5, & &1)
-      Map.put(acc, nome, palavras)
-    end)
-
+     # Pega 5 palavras aleatórias e sem repetições para cada jogador
+    {palavras_jogadores, _} =
+      Enum.map_reduce(jogadores, banco, fn nome, acc ->
+        {palavras, novo_banco} = Enum.split(acc |> Enum.shuffle(), 5)
+        {%{nome => palavras}, novo_banco}
+      end)
 
     IO.puts("\nDeseja visualizar as palavras dos jogadores? [s/n]")
     visualizar = IO.gets("> ") |> String.trim()
     if visualizar == "s" do
-      Enum.each(palavras_jogadores, fn {nome, palavras} ->
-        IO.puts("\nPalavras de #{nome}:")
-        Enum.each(palavras, fn palavra -> IO.puts(palavra) end)
+      Enum.each(palavras_jogadores, fn jogador ->
+        Enum.each(jogador, fn {nome, palavras} ->
+          IO.puts("\nPalavras de #{nome}:")
+          Enum.each(palavras, fn palavra -> IO.puts(palavra) end)
+        end)
       end)
     end
 
-
-    jogadoresData = palavras_jogadores.map(fn {nome, palavras} -> nome : {nome, 0} end)
-
-    {
-"luis" : {
-pontos: 0,
-palavras: ['palavra1', 'palavra2', 'palavra3', 'palavra4', 'palavra5']
-    }
-    "luis" : {
-pontos: 0,
-palavras: ['palavra1', 'palavra2', 'palavra3', 'palavra4', 'palavra5']
-    }
-    "luis" : {
-pontos: 0,
-palavras: ['palavra1', 'palavra2', 'palavra3', 'palavra4', 'palavra5']
-    }
-    }
-    pontuação_final = porJogador( palavras_jogadores)
+    placar_final = porJogador(palavras_jogadores)
 
     # Mostra a pontuação final dos jogadores
     IO.puts("\n\nPontuação final:")
-    Enum.each(jogadores, fn {nome, pontos} -> IO.puts("#{nome} - #{pontos} pontos") end)
+    Enum.each(placar_final, fn {nome, pontos} -> IO.puts("#{nome} - #{pontos} pontos") end)
 
     IO.puts("\nVencedor(es): ")
     max_pontos = Enum.max(jogadores, fn {_, pontos} -> pontos end)

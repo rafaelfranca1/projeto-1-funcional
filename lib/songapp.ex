@@ -17,7 +17,17 @@ defmodule Songapp do
   #Tentativa de outra biblioteca:
   @api_url2 "https://api.lyrics.ovh/v1"
 
-  def get_lyrics2(input) do
+  def get_lyrics(input) do
+    {flag, response} = get_lyrics2(input)
+
+    if flag == :error do
+      get_lyrics1(input)
+    else
+      {flag, response}
+    end
+  end
+
+  defp get_lyrics2(input) do
     {_flag, response} = search_song(input)
     artist = response[:artist]
     title = response[:title]
@@ -132,31 +142,6 @@ defp handle_response(%{
 
   defp extract_song_info(_), do: []
 
-  # def search_song(query) do
-  #   encoded_query = URI.encode(query)
-  #   url = "#{@api_url}?q=#{encoded_query}"
-
-  #   case HTTPoison.get(url, @header, follow_redirect: true) do
-  #     {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
-  #       case Poison.decode(body) do
-  #         {:ok, decoded_body} ->
-  #           extract_song_info(decoded_body)
-  #         {:error, error} ->
-  #           IO.puts("Erro ao decodificar JSON: #{inspect(error)}")
-  #           {:error, {:invalid_json, error}}
-  #       end
-
-  #     {:ok, %HTTPoison.Response{status_code: status_code, body: body}} ->
-  #       IO.puts("Erro HTTP: #{status_code}")
-  #       IO.puts("Corpo da Resposta: #{body}")
-  #       {:error, {:http_error, status_code, body}}
-
-  #     {:error, error} ->
-  #       IO.puts("Falha na requisição: #{inspect(error)}")
-  #       {:error, {:request_failed, error}}
-  #   end
-  # end
-
   defp extract_song_info2(%{"response" => %{"hits" => [hit | _]}}) do
     result = hit["result"]
 
@@ -171,7 +156,7 @@ defp handle_response(%{
   @doc """
   Retorna a letra da música
   """
-  def get_lyrics(song_name) do
+  defp get_lyrics1(song_name) do
     {:ok, mp} = search_song(song_name)
     song_name = mp[:title] <> " " <> mp[:artist]
 
@@ -297,7 +282,7 @@ defp handle_response(%{
           |> String.trim()
 
           artista = if String.contains?(artista, "(feat.") do
-            artista <> ")"  
+            artista <> ")"
           else
             artista
           end

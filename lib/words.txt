@@ -19,7 +19,6 @@ eye
 feel
 fly
 friend
-fuck
 go
 gravity
 hard
