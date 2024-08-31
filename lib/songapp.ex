@@ -247,17 +247,29 @@ defmodule Songapp do
 
     case HTTPoison.get(url) do
       {:ok, %HTTPoison.Response{body: body}} ->
-            Regex.scan(~r/<a href="([^"]+)" class="PageGriddesktop-hg04e9-0 ChartItemdesktop__Row-sc-3bmioe-0 [^"]+">.*?<div class="ChartItemdesktop__Rank-sc-3bmioe-1 [^"]+">([^<]+)<\/div>.*?<div class="ChartSongdesktop__Title-sc-18658hh-3 [^"]+">([^<]+)<\/div>.*?<h4 class="ChartSongdesktop__Artist-sc-18658hh-5 [^"]+">([^<]+)<\/h4>/s, body)
-            |> map(fn [_, link, rank, song_name, artist] ->
-              [
-                rank: String.trim(rank),
-                song_name: String.trim(song_name),
-                artist: String.replace(artist, "&amp;", "&") |> String.trim(),
-                link: link
-              ]
-            end)
+        info = Regex.scan(~r/<a href="([^"]+)" class="PageGriddesktop-hg04e9-0 ChartItemdesktop__Row-sc-3bmioe-0 [^"]+">.*?<div class="ChartItemdesktop__Rank-sc-3bmioe-1 [^"]+">([^<]+)<\/div>.*?<div class="ChartSongdesktop__Title-sc-18658hh-3 [^"]+">([^<]+)<\/div>.*?<h4 class="ChartSongdesktop__Artist-sc-18658hh-5 [^"]+">([^<]+)<\/h4>/, body)
+
+        info
+        |> map(fn [_, link, rank, nome, artista] ->
+          artista = artista
+          |> String.replace("&amp;", "(feat.")
+          |> String.trim()
+
+          artista = if String.contains?(artista, "(feat.") do
+            artista <> ")"
+          else
+            artista
+          end
+
+          [
+            rank: String.trim(rank),
+            nome: String.trim(nome),
+            artista: artista,
+            link: link
+          ]
+        end)
       {:error, %HTTPoison.Error{reason: reason}} ->
-        {:error, "Failed to fetch the page: #{reason}"}
+        {:error, "Falha ao buscar a pagina: #{reason}"}
     end
   end
 
