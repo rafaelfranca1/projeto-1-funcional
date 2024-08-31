@@ -14,6 +14,49 @@ defmodule Songapp do
   @api_key "KA4XOUPd0ERQumuJmB2lE1j24oRF_MOLVjBzB_2QSPibp4d0OEv1awCUsnJSuo0b"
   @header [{"Authorization", "Bearer #{@api_key}"}]
 
+  #Tentativa de outra biblioteca:
+  @api_url2 "https://api.lyrics.ovh/v1"
+
+  def get_lyrics2(input) do
+    {_flag, response} = search_song(input)
+    artist = response[:artist]
+    title = response[:title]
+    url = "#{@api_url2}/#{URI.encode(artist)}/#{URI.encode(title)}"
+
+    case HTTPoison.get(url) do
+      {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
+        body
+        |> Jason.decode!()
+        |> handle_response()
+
+      {:error, %HTTPoison.Error{reason: reason}} ->
+        {:error, reason}
+    end
+  end
+
+defp handle_response(%{
+        "lyrics" => %{
+          "lyrics_body" => lyrics
+        }
+      }
+  ) do
+      # Se a letra está em ASCII, converta para texto legível
+      lyrics
+      |> String.to_charlist()        # Converte a string de ASCII para uma lista de inteiros
+      |> Enum.map(&(&1))             # Converte cada inteiro ASCII para seu caractere correspondente
+      |> List.to_string()            # Converte a lista de caracteres para uma string
+      |> IO.puts()                   # Exibe a letra convertida
+
+      {:ok, lyrics}
+  end
+
+  defp handle_response(%{"lyrics" => lyrics}) do
+    {:ok, lyrics}
+  end
+
+  defp handle_response(_), do: {:error, "Letra não encontrada"}
+
+
   def search_song(query) do
     search_song(query, [], 0)
   end
@@ -125,8 +168,6 @@ defmodule Songapp do
     }
   end
 
-  # defp extract_song_info(_), do: {:error, "Nenhuma música encontrada"}
-
   @doc """
   Retorna a letra da música
   """
@@ -165,7 +206,7 @@ defmodule Songapp do
           IO.puts("Título: #{mapa[:title]}")
           IO.puts("\nLetra:\n\n #{lyrics_final1}")
 
-          # {:ok, lyrics_final}
+          {:ok, lyrics_final1}
         else
           error ->
             IO.puts("Erro ao obter as letras: #{inspect(error)}")

@@ -1,52 +1,63 @@
 defmodule SongAssociation do
-
-  import Songapp
-
   # Este modulo contem as funcoes necessarias para o jogo SongAssociation Game
 
   @doc """
     Funcao responsavel por iniciar e rodar o jogo SongAssociation
   """
   def start() do
+    IO.puts("""
+    ────█▀█▄▄▄▄─────██▄───────────────────────
+    ────█▀▄▄▄▄█─────█▀▀█──╔══╦╦╦═╦╦═╗────────
+    ─▄▄▄█─────█──▄▄▄█─────║║║║║║╚╣║╔╝───────
+    ██▀▄█─▄██▀█─███▀█─────║║║║║╠╗║║╚╗─────
+    ─▀▀▀──▀█▄█▀─▀█▄█▀─────╚╩╩╩═╩═╩╩═╝───
+    ──────────────────────────────────
+    """)
+
     IO.puts("Bem-vindo ao SongAssociation Game!")
     IO.puts("Vamos começar!")
 
+
     # Cadastra os jogadores
-    jogadores = cadastraPlayers()
+    qtd_jogadores = getQuantidadeJogadores()
+    jogadores = cadastraJogadores(qtd_jogadores)
 
     # Mostra os jogadores cadastrados e suas pontuacoes
     IO.puts("\nJogadores cadastrados:")
-    Enum.each(jogadores, fn {nome, pontos} -> IO.puts("#{nome} - #{pontos} pontos") end)
+    Enum.each(jogadores, fn player -> IO.puts(player) end)
 
     # Inicia a rodada
     startRound(jogadores)
   end
 
-
-  defp cadastraPlayers() do
-    IO.puts("Digite a quantidade de jogadores [2-10]: ")
+  defp getQuantidadeJogadores() do
     qtd_jogadores = IO.gets("> ") |> String.trim() |> String.to_integer()
 
     if qtd_jogadores < 2 or qtd_jogadores > 10 do
       IO.puts("Valor Inválido! Por favor, insira um número dentro do intervalo [2-10]\n")
-      cadastraPlayers()
+      getQuantidadeJogadores()
     else
-      # Cria um mapa para armazenar os jogadores
-      jogadores =
-        for i <- 1..qtd_jogadores do
-          IO.puts("\nDigite o nome do jogador #{i}: ")
-          nome = IO.gets("> ") |> String.trim()
-          {nome, 0}
-        end
-        |> Enum.into(%{}) # Transforma a lista de tuplas em um mapa
+      qtd_jogadores
+    end
+  end
 
-      jogadores
+  defp cadastraJogadores(_org, 0), do: nil
+  defp cadastraPlayers(org, x) do
+    IO.puts("Digite o nome do jogador #{x}: ")
+    nome = IO.gets("> ") |> String.trim()
+
+    if nome == "" do
+      IO.puts("Nome inválido! Por favor, insira um nome válido.")
+      IO.puts("Reiniciaremos o cadastro de jogadores.")
+      cadastraJogadores(org, org)
+    else
+      [nome | cadastraJogadores(org, x-1)]
     end
   end
 
   defp readArchive() do
     # Tenta ler o arquivo de palavras
-    case File.read("C:/Users/lucas/OneDrive/Área de Trabalho/projeto-1-funcional/lib/words.txt") do
+    case File.read("C:/Users/66666/OneDrive/Área de Trabalho/projeto-1-funcional/lib/words.txt") do
       {:ok, content} ->
         content
         |> String.split("\n")
@@ -58,55 +69,23 @@ defmodule SongAssociation do
     end
   end
 
-  defp porRodadas(jogadores, palavras) do
+  defp porJogador( jogadoresData ) do
     # Inicia a rodada
     Enum.each(palavras, fn {nome, palavras} ->
       IO.puts("\nVez de #{nome}!")
       Enum.each(palavras, fn palavra ->
         IO.puts("\nPalavra: #{palavra}")
-        for i <- 1..7 do
-          IO.puts("#{i} segundos...")
-          Process.sleep(1000)
-        end
         IO.puts("Digite o artista: ")
         artista = IO.gets("> ") |> String.trim()
         IO.puts("Digite o nome da música: ")
         nome_musica = IO.gets("> ") |> String.trim()
 
         input = "#{artista} - #{nome_musica}"
-        {flag, lyrics} = get_lyrics(input)
-        if flag == :error do
-          IO.puts("Erro ao obter as letras da música. Rodada perdida.")
+        if artista == "" or nome_musica == "" do
+          IO.puts("Entrada invalida, digite artistas/musicas validos. Rodada perdida.")
         else
-          if String.contains?(lyrics, palavra) do
-            IO.puts("Palavra válida! +1 ponto para #{nome}")
-            Map.put(jogadores, nome, jogadores[nome] + 1)
-          else
-            IO.puts("Palavra inválida! #{nome} perdeu a rodada.")
-            Enum.each(jogadores, fn {nome, pontos} -> IO.puts("#{nome} - #{pontos} pontos") end)
-          end
-        end
-      end)
-    end)
-  end
-
-    defp porJogador(jogadores, palavras) do
-      # Inicia a rodada
-      Enum.each(palavras, fn {nome, palavras} ->
-        IO.puts("\nVez de #{nome}!")
-        Enum.each(palavras, fn palavra ->
-          IO.puts("\nPalavra: #{palavra}")
-          for i <- 1..7 do
-            IO.puts("#{i} segundos...")
-            Process.sleep(1000)
-          end
-          IO.puts("Digite o artista: ")
-          artista = IO.gets("> ") |> String.trim()
-          IO.puts("Digite o nome da música: ")
-          nome_musica = IO.gets("> ") |> String.trim()
-
-          input = "#{artista} - #{nome_musica}"
-          {flag, lyrics} = get_lyrics(input)
+          {flag, lyricsin} = Songapp.get_lyrics2(input)
+          lyrics = String.downcase(lyricsin)
           if flag == :error do
             IO.puts("Erro ao obter as letras da música. Rodada perdida.")
           else
@@ -118,9 +97,17 @@ defmodule SongAssociation do
               Enum.each(jogadores, fn {nome, pontos} -> IO.puts("#{nome} - #{pontos} pontos") end)
             end
           end
-        end)
+        end
       end)
+    end)
+
+    if palavras.len > 0  do
+      porJogador({
+        ...jogadores,
+        jogadores[jogadores|0] + 1
+      })
     end
+  end
 
 
   defp startRound(jogadores) do
@@ -128,10 +115,11 @@ defmodule SongAssociation do
 
     banco = readArchive()
     # Pega 5 palavras aleatórias e sem repetições para cada jogador
-    palavras_jogadores =
-      Enum.map(jogadores, fn {nome, _pontos} ->
-        {nome, Enum.take_random(banco, 5)}
-      end)
+    palavras_jogadores = Enum.reduce(jogadores, %{}, fn {nome, _}, acc ->
+      palavras = Enum.take_random(banco, 5, & &1)
+      Map.put(acc, nome, palavras)
+    end)
+
 
     IO.puts("\nDeseja visualizar as palavras dos jogadores? [s/n]")
     visualizar = IO.gets("> ") |> String.trim()
@@ -142,28 +130,24 @@ defmodule SongAssociation do
       end)
     end
 
-    # Inicia a rodada
-    IO.puts("\n\nVamos começar a rodada!")
-    IO.puts("Quando estiver pronto, pressione 'enter' para começar!")
-    ready = IO.gets("> ")
 
-    IO.puts("\nSelecione o modo de jogo:\n1. Por rodadas (A cada rodada, 1 jogador responde 1 palavra)\n2. Por jogador (Cada jogador responde todas as palavras de uma vez)")
-    modo = IO.gets("> ") |> String.trim() |> String.to_integer()
+    jogadoresData = palavras_jogadores.map(fn {nome, palavras} -> nome : {nome, 0} end)
 
-    """
-      'Por rodadas': cada jogador receberá uma palavra por vez,
-      intercalando suas jogadas. O jogador que não conseguir pensar
-      em uma palavra ou errar a música perde a rodada.
-      'Por jogador': cada jogador receberá todas as palavras de uma
-      vez e terá um tempo para responder todas elas. O jogador que
-      não conseguir pensar em uma palavra ou errar a música perde a rodada.
-    """
-
-    case modo do
-      1 -> porRodadas(jogadores, palavras_jogadores)
-      2 -> porJogador(jogadores, palavras_jogadores)
-      _ ->  IO.puts("Modo inválido! Tente novamente.")
-    end
+    {
+"luis" : {
+pontos: 0,
+palavras: ['palavra1', 'palavra2', 'palavra3', 'palavra4', 'palavra5']
+    }
+    "luis" : {
+pontos: 0,
+palavras: ['palavra1', 'palavra2', 'palavra3', 'palavra4', 'palavra5']
+    }
+    "luis" : {
+pontos: 0,
+palavras: ['palavra1', 'palavra2', 'palavra3', 'palavra4', 'palavra5']
+    }
+    }
+    pontuação_final = porJogador( palavras_jogadores)
 
     # Mostra a pontuação final dos jogadores
     IO.puts("\n\nPontuação final:")
@@ -180,6 +164,3 @@ defmodule SongAssociation do
   end
 
 end
-
-
-SongAssociation.start()

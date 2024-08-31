@@ -27,7 +27,6 @@ defmodule Rankings do
   @doc """
     Retorna as x musicas mais populares do artista
   """
-  #Kaique
   def artist_top_songs(_artist, x) when x <= 0 do
     IO.puts("Número inválido")
   end
