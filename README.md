@@ -11,7 +11,7 @@ Projeto que utiliza a API do site Genius para buscar informações sobre música
 
 ## Autores
 
-Conheça os desenvolvedores por trás do Pokemon Battle Simulator:
+Conheça os desenvolvedores por trás do SongApp e do SongAssociation Game:
 
 - [João Marcos](https://github.com/j4marcos)
 - [Kaique Bezerra](https://github.com/KaiqueSantos2004)
