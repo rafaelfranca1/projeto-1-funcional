@@ -58,7 +58,7 @@ defmodule SongAssociation do
 
   defp readArchive() do
     # Tenta ler o arquivo de palavras
-    case File.read("./words.txt") do
+    case File.read("D:/Linguagem Elixir/Projeto1/projeto-1-funcional/lib/words.txt") do
       {:ok, content} ->
         content
         |> String.split("\n")
@@ -90,16 +90,18 @@ defmodule SongAssociation do
           IO.puts("Entrada inválida, digite artistas/músicas válidos. Rodada perdida.")
         else
           {flag, lyricsin} = Songapp.get_lyrics(input)
-          lyrics = String.downcase(lyricsin)
           if flag == :error do
             IO.puts("Erro ao obter as letras da música. Rodada perdida.")
           else
-            if String.contains?(lyrics, palavra) do
+            lyrics = String.downcase(lyricsin)
+            find = String.match?(lyrics, ~r/.*#{palavra}.*/)
+            IO.puts("Palavra: #{palavra} | Encotrado: #{find}")
+            if find do
               IO.puts("Palavra válida! +1 ponto para #{nome}")
               # Atualiza o placar do jogador
-              jogadores = Map.update(jogadores, nome, 1, &(&1 + 1))
+              Map.update(jogadores, nome, 1, &(&1 + 1))
             else
-              IO.puts("Palavra inválida! #{nome} perdeu a rodada.")
+              IO.puts("#{palavra} não foi encontrada na letra! #{String.upcase(nome)} perdeu a rodada.")
             end
           end
         end
@@ -107,8 +109,6 @@ defmodule SongAssociation do
     end)
   end)
 
-    # Retorna o mapa atualizado com os pontos dos jogadores
-    jogadores
   end
 
 
@@ -141,8 +141,8 @@ defmodule SongAssociation do
     Enum.each(placar_final, fn {nome, pontos} -> IO.puts("#{nome} - #{pontos} pontos") end)
 
     IO.puts("\nVencedor(es): ")
-    max_pontos = Enum.max(jogadores, fn {_, pontos} -> pontos end)
-    Enum.each(jogadores, fn {nome, pontos} ->
+    max_pontos = Enum.max(placar_final, fn {_, pontos} -> pontos end)
+    Enum.each(placar_final, fn {nome, pontos} ->
       if pontos == max_pontos do
         IO.puts("#{nome} - #{pontos} pontos")
       end

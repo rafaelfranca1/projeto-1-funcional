@@ -18,19 +18,19 @@ defmodule Songapp do
   @api_url2 "https://api.lyrics.ovh/v1"
 
   def get_lyrics(input) do
-    {flag, response} = get_lyrics2(input)
+    {:ok, mp} = search_song(input)
+    {flag, response} = get_lyrics2(mp)
 
     if flag == :error do
-      get_lyrics1(input)
+      get_lyrics1(mp)
     else
       {flag, response}
     end
   end
 
   defp get_lyrics2(input) do
-    {_flag, response} = search_song(input)
-    artist = response[:artist]
-    title = response[:title]
+    artist = input[:artist]
+    title = input[:title]
     url = "#{@api_url2}/#{URI.encode(artist)}/#{URI.encode(title)}"
 
     case HTTPoison.get(url) do
@@ -38,6 +38,9 @@ defmodule Songapp do
         body
         |> Jason.decode!()
         |> handle_response()
+
+      {:ok, %HTTPoison.Response{status_code: 404, body: _body}} ->
+        {:error, "Letra não encontrada"}
 
       {:error, %HTTPoison.Error{reason: reason}} ->
         {:error, reason}
@@ -101,7 +104,7 @@ defp handle_response(%{
                 end
 
               :error ->
-                IO.puts("Nenhuma nova música encontrada. Tentando novamente...")
+                IO.puts("Não foi possível encontrar uma música correspondente. Verifique se o nome da música e do artista estão corretos.")
                 search_song(query, retrieved_songs, attempts + 1)
             end
 
@@ -156,8 +159,7 @@ defp handle_response(%{
   @doc """
   Retorna a letra da música
   """
-  defp get_lyrics1(song_name) do
-    {:ok, mp} = search_song(song_name)
+  defp get_lyrics1(mp) do
     song_name = mp[:title] <> " " <> mp[:artist]
 
     encoded_query = URI.encode_www_form(song_name)
