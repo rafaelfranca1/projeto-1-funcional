@@ -110,9 +110,7 @@ defmodule Songapp do
                 IO.puts("Encontrei a música: #{song[:title]} - #{song[:artist]}")
                 IO.puts("Esta é a música que você procurava? (s/n)")
                 case IO.gets("> ") |> String.trim() do
-                  "s" ->
-                    {:ok, song}
-                    song
+                  "s" -> {:ok, song}
                   "n" ->
                     IO.puts("Procurando outra música...")
                     search_song(query, [song | retrieved_songs], attempts + 1)
