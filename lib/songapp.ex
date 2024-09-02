@@ -1,17 +1,15 @@
 defmodule Songapp do
   @moduledoc """
-  Módulo Songapp
+  O módulo `SongApp` fornece funcionalidades para buscar informações sobre músicas usando a API do Genius.
 
-  Este módulo é um projeto que utiliza a API do site Genius para buscar informações sobre músicas, incluindo letras e rankings diários.
-
-  Funções principais:
-  - `search_song/1`: Busca informações sobre uma música específica.
-  - `get_lyrics/1`: Retorna a letra de uma música.
-  - `ranking_hoje/0`: Obtém o ranking de hoje de músicas do site Genius.
+  ## Funções
+  * `search_song/1` - Busca informações sobre uma música específica com base em uma consulta.
+  * `get_lyrics/1` - Retorna a letra de uma música.
+  * `ranking_hoje/0` - Obtém o ranking de hoje de músicas do site Genius.
   """
 
   @api_url "https://api.genius.com/search"
-  @api_key "KA4XOUPd0ERQumuJmB2lE1j24oRF_MOLVjBzB_2QSPibp4d0OEv1awCUsnJSuo0b"
+  @api_key System.get_env("GENIUS_API_KEY")
   @header [{"Authorization", "Bearer #{@api_key}"}]
 
   #Tentativa de outra biblioteca:
@@ -52,20 +50,16 @@ defmodule Songapp do
     end
   end
 
-  defp handle_response(%{
-          "lyrics" => %{
-            "lyrics_body" => lyrics
-          }
-        }
-    ) do
-        # Se a letra está em ASCII, converta para texto legível
-        lyrics
-        |> String.to_charlist()        # Converte a string de ASCII para uma lista de inteiros
-        |> Enum.map(&(&1))             # Converte cada inteiro ASCII para seu caractere correspondente
-        |> List.to_string()            # Converte a lista de caracteres para uma string
-        |> IO.puts()                   # Exibe a letra convertida
+  defp handle_response(%{ "lyrics" => %{ "lyrics_body" => lyrics }}) do
+    # Se a letra está em ASCII, converta para texto legível
+    lyrics
+    |> String.to_charlist()        # Converte a string de ASCII para uma lista de inteiros
+    |> Enum.map(&(&1))             # Converte cada inteiro ASCII para seu caractere correspondente
+    |> List.to_string()            # Converte a lista de caracteres para uma string
+    |> IO.puts()                   # Exibe a letra convertida
 
-        {:ok, lyrics}
+    {:ok, lyrics}
+
   end
 
   defp handle_response(%{"lyrics" => lyrics}) do
@@ -74,6 +68,25 @@ defmodule Songapp do
 
   defp handle_response(_), do: {:error, "Letra não encontrada"}
 
+  @doc """
+  Busca informações sobre uma música específica com base em uma consulta.
+
+  ## Parâmetros
+
+    - `query`: Uma string contendo a consulta de busca da música.
+
+  ## Exemplos
+
+      iex> Songapp.search_song("Never Gonna Give You Up")
+      {:ok,
+       %{
+         title: "Never Gonna Give You Up",
+         artist: "Rick Astley",
+         release_date: "July 27, 1987",
+         song_url: "https://genius.com/Rick-astley-never-gonna-give-you-up-lyrics"
+       }}
+
+  """
   def search_song(query) do
     search_song(query, [], 0)
   end
@@ -84,12 +97,11 @@ defmodule Songapp do
   end
 
   defp search_song(query, retrieved_songs, attempts) do
-    encoded_query = URI.encode(query)
-    url = "#{@api_url}?q=#{encoded_query}"
+    url = "#{@api_url}?q=#{URI.encode(query)}"
 
     case HTTPoison.get(url, @header, follow_redirect: true) do
       {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
-        case Jason.decode(body) do
+        case Poison.decode(body) do
           {:ok, decoded_body} ->
             songs = extract_song_info(decoded_body)
 
@@ -98,7 +110,9 @@ defmodule Songapp do
                 IO.puts("Encontrei a música: #{song[:title]} - #{song[:artist]}")
                 IO.puts("Esta é a música que você procurava? (s/n)")
                 case IO.gets("> ") |> String.trim() do
-                  "s" -> {:ok, song}
+                  "s" ->
+                    {:ok, song}
+                    song
                   "n" ->
                     IO.puts("Procurando outra música...")
                     search_song(query, [song | retrieved_songs], attempts + 1)
@@ -112,26 +126,11 @@ defmodule Songapp do
                 search_song(query, retrieved_songs, attempts + 1)
             end
 
-          {:error, error} ->
-            IO.puts("Erro ao decodificar JSON: #{inspect(error)}")
-            {:error, {:invalid_json, error}}
+          {:error, error} -> IO.puts("Erro ao decodificar JSON: #{inspect(error)}")
         end
 
-      {:ok, %HTTPoison.Response{status_code: status_code, body: body}} ->
-        IO.puts("Erro HTTP: #{status_code}")
-        IO.puts("Corpo da Resposta: #{body}")
-        {:error, {:http_error, status_code, body}}
-
-      {:error, error} ->
-        IO.puts("Falha na requisição: #{inspect(error)}")
-        {:error, {:request_failed, error}}
-    end
-  end
-
-  defp find_new_song(songs, retrieved_songs) do
-    case Enum.find(songs, fn song -> song not in retrieved_songs end) do
-      nil -> :error
-      song -> {:ok, song}
+      {:ok, %HTTPoison.Response{status_code: status_code}} -> IO.puts("Erro HTTP: #{status_code}")
+      {:error, _error} -> IO.puts("Falha na requisição.")
     end
   end
 
@@ -148,6 +147,15 @@ defmodule Songapp do
   end
 
   defp extract_song_info(_), do: []
+
+
+  defp find_new_song(songs, retrieved_songs) do
+    case Enum.find(songs, fn song -> song not in retrieved_songs end) do
+      nil -> :error
+      song -> {:ok, song}
+    end
+  end
+
 
   defp extract_song_info2(%{"response" => %{"hits" => [hit | _]}}) do
     result = hit["result"]
