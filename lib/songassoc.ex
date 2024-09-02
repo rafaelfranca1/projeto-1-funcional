@@ -17,7 +17,6 @@ defmodule SongAssociation do
     IO.puts("Bem-vindo ao SongAssociation Game!")
     IO.puts("Vamos começar!")
 
-
     # Cadastra os jogadores
     qtd_jogadores = getQuantidadeJogadores()
     jogadores = cadastraJogadores(qtd_jogadores, qtd_jogadores)
@@ -43,6 +42,7 @@ defmodule SongAssociation do
   end
 
   defp cadastraJogadores(_org, 0), do: []
+
   defp cadastraJogadores(org, x) do
     IO.puts("Digite o nome do jogador #{x}: ")
     nome = IO.gets("> ") |> String.trim()
@@ -52,17 +52,22 @@ defmodule SongAssociation do
       IO.puts("Reiniciaremos o cadastro de jogadores.")
       cadastraJogadores(org, org)
     else
-      [nome | cadastraJogadores(org, x-1)]
+      [nome | cadastraJogadores(org, x - 1)]
     end
+  end
+
+  defp removeEnter(contentin) do
+    Enum.map(contentin, fn word -> String.replace(word, "\\r\\n", "") end)
   end
 
   defp readArchive() do
     # Tenta ler o arquivo de palavras
     case File.read("D:/Linguagem Elixir/Projeto1/projeto-1-funcional/lib/words.txt") do
-      {:ok, content} ->
-        content
+      {:ok, contentin} ->
+        contentin
         |> String.split("\n")
-        |> Enum.filter(&(&1 != "")) # Remove linhas vazias
+        |> Enum.map(&String.trim/1)
+        |> removeEnter()
 
       {:error, reason} ->
         IO.puts("Erro ao ler o arquivo: #{reason}")
@@ -70,84 +75,104 @@ defmodule SongAssociation do
     end
   end
 
-  defp porJogador(palavras_jogadores) do
-  # Inicia a rodada
-  jogadores = Map.new()
+  def askWord(palavra, nome, points) do
+    IO.puts("\nPalavra: #{palavra}")
+    IO.puts("Digite o artista: ")
+    artista = IO.gets("> ") |> String.trim()
+    IO.puts("Digite o nome da música: ")
+    nome_musica = IO.gets("> ") |> String.trim()
 
-  Enum.each(palavras_jogadores, fn jogador ->
-    Enum.each(jogador, fn {nome, palavras} ->
-      IO.puts("\nVez de #{nome}!")
+    input = "#{artista} - #{nome_musica}"
 
-      Enum.each(palavras, fn palavra ->
-        IO.puts("\nPalavra: #{palavra}")
-        IO.puts("Digite o artista: ")
-        artista = IO.gets("> ") |> String.trim()
-        IO.puts("Digite o nome da música: ")
-        nome_musica = IO.gets("> ") |> String.trim()
+    if artista == "" or nome_musica == "" do
+      IO.puts("Entrada inválida, digite artistas/músicas válidos. Rodada perdida.")
+      points + 0
+    else
+      {flag, lyricsin} = Songapp.get_lyrics(input)
 
-        input = "#{artista} - #{nome_musica}"
-        if artista == "" or nome_musica == "" do
-          IO.puts("Entrada inválida, digite artistas/músicas válidos. Rodada perdida.")
+      if flag == :error do
+        IO.puts("Erro ao obter as letras da música. Rodada perdida.")
+        points + 0
+      else
+        lyrics = String.downcase(lyricsin)
+        if String.contains?(lyrics, palavra) do
+          IO.puts("Palavra válida! +1 ponto para #{nome}")
+          # Atualiza o placar do jogador
+          points + 1
         else
-          {flag, lyricsin} = Songapp.get_lyrics(input)
-          if flag == :error do
-            IO.puts("Erro ao obter as letras da música. Rodada perdida.")
-          else
-            lyrics = String.downcase(lyricsin)
-            find = String.match?(lyrics, ~r/.*#{palavra}.*/)
-            IO.puts("Palavra: #{palavra} | Encotrado: #{find}")
-            if find do
-              IO.puts("Palavra válida! +1 ponto para #{nome}")
-              # Atualiza o placar do jogador
-              Map.update(jogadores, nome, 1, &(&1 + 1))
-            else
-              IO.puts("#{palavra} não foi encontrada na letra! #{String.upcase(nome)} perdeu a rodada.")
-            end
-          end
-        end
-      end)
-    end)
-  end)
+          IO.puts(
+            "#{palavra} não foi encontrada na letra! #{String.upcase(nome)} perdeu a rodada."
+          )
 
+          points + 0
+        end
+      end
+    end
   end
 
+  defp porJogador(palavras_jogadores) do
+    jogadores =
+      Enum.map(palavras_jogadores, fn mapa ->
+        %{
+          nome: mapa[:nome],
+          palavras: mapa[:palavras],
+          pontos: 0
+        }
+      end)
+
+    IO.inspect(jogadores)
+
+    tabela_pontos = Enum.reduce(jogadores, [], fn map, lista ->
+        IO.puts("\nVez de #{map[:nome]}!")
+
+        points = Enum.reduce(map[:palavras], 0, fn (palavra, acumulador) -> askWord(palavra, map[:nome], acumulador) end)
+
+
+
+        lista ++ [%{
+              nome: map[:nome],
+              pontos: map[:pontos] + points,
+              palavras: map[:palavras]
+            }]
+
+      end)
+
+      IO.inspect(tabela_pontos)
+
+    tabela_pontos
+  end
 
   defp startRound(jogadores) do
     IO.puts("\n\nRodada iniciada!")
 
     banco = readArchive()
-     # Pega 5 palavras aleatórias e sem repetições para cada jogador
-    {palavras_jogadores, _} =
+    # Monta um array de mapas de jogadores[nome-palavras], sem repetições de palavras
+    {palavras_j, _} =
       Enum.map_reduce(jogadores, banco, fn nome, acc ->
         {palavras, novo_banco} = Enum.split(acc |> Enum.shuffle(), 5)
         {%{nome => palavras}, novo_banco}
       end)
 
-    IO.puts("\nDeseja visualizar as palavras dos jogadores? [s/n]")
-    visualizar = IO.gets("> ") |> String.trim()
-    if visualizar == "s" do
-      Enum.each(palavras_jogadores, fn jogador ->
-        Enum.each(jogador, fn {nome, palavras} ->
-          IO.puts("\nPalavras de #{nome}:")
-          Enum.each(palavras, fn palavra -> IO.puts(palavra) end)
-        end)
+    palavras_jogadores =
+      Enum.map(palavras_j, fn pj ->
+        [head | _] =
+          Enum.map(pj, fn {chave, valor} ->
+            %{nome: chave, palavras: valor}
+          end)
+
+        head
       end)
-    end
+
+    IO.inspect(palavras_jogadores)
 
     placar_final = porJogador(palavras_jogadores)
+    # IO.inspect(placar_final)
 
-    # Mostra a pontuação final dos jogadores
-    IO.puts("\n\nPontuação final:")
-    Enum.each(placar_final, fn {nome, pontos} -> IO.puts("#{nome} - #{pontos} pontos") end)
+    ranking = Enum.sort_by(placar_final, &(&1.pontos), :desc)
 
-    IO.puts("\nVencedor(es): ")
-    max_pontos = Enum.max(placar_final, fn {_, pontos} -> pontos end)
-    Enum.each(placar_final, fn {nome, pontos} ->
-      if pontos == max_pontos do
-        IO.puts("#{nome} - #{pontos} pontos")
-      end
+    IO.puts("\n\nRanking Final:")
+    Enum.each(ranking, fn mapa ->
+      IO.puts("#{String.upcase(mapa[:nome])} - #{mapa[:pontos]} pontos")
     end)
-
   end
-
 end

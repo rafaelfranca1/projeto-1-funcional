@@ -30,7 +30,7 @@ defmodule Songapp do
 
   defp get_lyrics2(input) do
     artist = input[:artist]
-    title = input[:title]
+    title = Regex.replace(~r/\([^)]*\)/,input[:title], "")
     url = "#{@api_url2}/#{URI.encode(artist)}/#{URI.encode(title)}"
 
     case HTTPoison.get(url) do
@@ -47,20 +47,20 @@ defmodule Songapp do
     end
   end
 
-defp handle_response(%{
-        "lyrics" => %{
-          "lyrics_body" => lyrics
+  defp handle_response(%{
+          "lyrics" => %{
+            "lyrics_body" => lyrics
+          }
         }
-      }
-  ) do
-      # Se a letra está em ASCII, converta para texto legível
-      lyrics
-      |> String.to_charlist()        # Converte a string de ASCII para uma lista de inteiros
-      |> Enum.map(&(&1))             # Converte cada inteiro ASCII para seu caractere correspondente
-      |> List.to_string()            # Converte a lista de caracteres para uma string
-      |> IO.puts()                   # Exibe a letra convertida
+    ) do
+        # Se a letra está em ASCII, converta para texto legível
+        lyrics
+        |> String.to_charlist()        # Converte a string de ASCII para uma lista de inteiros
+        |> Enum.map(&(&1))             # Converte cada inteiro ASCII para seu caractere correspondente
+        |> List.to_string()            # Converte a lista de caracteres para uma string
+        |> IO.puts()                   # Exibe a letra convertida
 
-      {:ok, lyrics}
+        {:ok, lyrics}
   end
 
   defp handle_response(%{"lyrics" => lyrics}) do
@@ -68,7 +68,6 @@ defp handle_response(%{
   end
 
   defp handle_response(_), do: {:error, "Letra não encontrada"}
-
 
   def search_song(query) do
     search_song(query, [], 0)
@@ -156,9 +155,6 @@ defp handle_response(%{
     }
   end
 
-  @doc """
-  Retorna a letra da música
-  """
   defp get_lyrics1(mp) do
     song_name = mp[:title] <> " " <> mp[:artist]
 
