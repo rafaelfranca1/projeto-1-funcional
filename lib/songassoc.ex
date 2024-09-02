@@ -61,8 +61,14 @@ defmodule SongAssociation do
   end
 
   defp readArchive() do
+    # Construir o caminho relativo do arquivo
+    caminho = Path.join([__DIR__, "words.txt"])
+
+    # Imprimir o caminho para debug
+    IO.puts("Tentando ler o arquivo no caminho: #{caminho}")
+
     # Tenta ler o arquivo de palavras
-    case File.read("D:/Linguagem Elixir/Projeto1/projeto-1-funcional/lib/words.txt") do
+    case File.read(caminho) do
       {:ok, contentin} ->
         contentin
         |> String.split("\n")
@@ -102,7 +108,7 @@ defmodule SongAssociation do
             IO.puts("#{palavra} não foi encontrada na letra! #{String.upcase(nome)} perdeu a rodada.")
             points + 0
           end
-        
+
       end
     end
   end
