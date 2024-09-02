@@ -15,10 +15,25 @@ defmodule Songapp do
   #Tentativa de outra biblioteca:
   @api_url2 "https://api.lyrics.ovh/v1"
 
-  def get_lyrics2(input) do
-    {_flag, response} = search_song(input)
-    artist = response[:artist]
-    title = response[:title]
+  def get_lyrics(input) do
+    {fl, mp} = search_song(input)
+    if fl == :error do
+      {:error, "Música não encontrada"}
+    else
+      {flag, response} = get_lyrics2(mp)
+
+      if flag == :error do
+        get_lyrics1(mp)
+      else
+        IO.puts(response)
+        {flag, response}
+      end
+    end
+  end
+
+  defp get_lyrics2(input) do
+    artist = input[:artist]
+    title = Regex.replace(~r/\([^)]*\)/,input[:title], "")
     url = "#{@api_url2}/#{URI.encode(artist)}/#{URI.encode(title)}"
 
     case HTTPoison.get(url) do
@@ -26,6 +41,9 @@ defmodule Songapp do
         body
         |> Jason.decode!()
         |> handle_response()
+
+      {:ok, %HTTPoison.Response{status_code: 404, body: _body}} ->
+        {:error, "Letra não encontrada"}
 
       {:error, %HTTPoison.Error{reason: reason}} ->
         {:error, reason}
@@ -41,6 +59,7 @@ defmodule Songapp do
     |> IO.puts()                   # Exibe a letra convertida
 
     {:ok, lyrics}
+
   end
 
   defp handle_response(%{"lyrics" => lyrics}) do
@@ -72,9 +91,9 @@ defmodule Songapp do
     search_song(query, [], 0)
   end
 
-  defp search_song(_query, _retrieved_songs, 8) do
-    IO.puts("\nNúmero máximo de tentativas atingido. Tente ser mais específico ou verifique a ortografia.")
-    :error
+  defp search_song(_query, _retrieved_songs, attempts) when attempts >= 8 do
+    IO.puts("Número máximo de tentativas atingido. Por gentileza, tente ser mais específico na próxima vez.")
+    {:error, "deu ruim"}
   end
 
   defp search_song(query, retrieved_songs, attempts) do
@@ -103,7 +122,7 @@ defmodule Songapp do
                 end
 
               :error ->
-                IO.puts("Nenhuma nova música encontrada. Tentando novamente...")
+                IO.puts("Não foi possível encontrar uma música correspondente. Verifique se o nome da música e do artista estão corretos.")
                 search_song(query, retrieved_songs, attempts + 1)
             end
 
@@ -129,12 +148,14 @@ defmodule Songapp do
 
   defp extract_song_info(_), do: []
 
+
   defp find_new_song(songs, retrieved_songs) do
     case Enum.find(songs, fn song -> song not in retrieved_songs end) do
       nil -> :error
       song -> {:ok, song}
     end
   end
+
 
   defp extract_song_info2(%{"response" => %{"hits" => [hit | _]}}) do
     result = hit["result"]
@@ -147,11 +168,7 @@ defmodule Songapp do
     }
   end
 
-  @doc """
-  Retorna a letra da música
-  """
-  def get_lyrics(song_name) do
-    {:ok, mp} = search_song(song_name)
+  defp get_lyrics1(mp) do
     song_name = mp[:title] <> " " <> mp[:artist]
 
     encoded_query = URI.encode_www_form(song_name)

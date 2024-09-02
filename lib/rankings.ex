@@ -30,6 +30,7 @@ defmodule Rankings do
   def artist_top_songs(_artist, x) when x <= 0 do
     IO.puts("Número inválido")
   end
+
   def artist_top_songs(artist_name, x) when is_integer(x) and x > 0 do
     with {:ok, artist_id} <- search_artist(artist_name),
     {:ok, %Tesla.Env{status: 200, body: %{"response" => %{"songs" => songs}}}} <- list_songs(artist_id) do
@@ -41,6 +42,7 @@ defmodule Rankings do
     _ -> {:error, "Não foi possível obter as músicas"}
     end
   end
+#quanto nenhum valor for passado para o numero de musicas a funcao retorna5 musicas
 def artist_top_songs(artist_name) do
   with {:ok, artist_id} <- search_artist(artist_name),
     {:ok, %Tesla.Env{status: 200, body: %{"response" => %{"songs" => songs}}}} <- list_songs(artist_id) do
