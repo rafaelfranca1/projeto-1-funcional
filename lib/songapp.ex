@@ -15,6 +15,13 @@ defmodule Songapp do
   #Tentativa de outra biblioteca:
   @api_url2 "https://api.lyrics.ovh/v1"
 
+  @doc """
+  Retorna a letra de uma música com base na consulta fornecida.
+
+  ## Exemplos
+  iex> Songapp.get_lyrics("Never Gonna Give You Up Rick Astley")
+  {:ok, "We're no strangers to love..."}
+  """
   def get_lyrics(input) do
     {fl, mp} = search_song(input)
     if fl == :error do
@@ -71,21 +78,15 @@ defmodule Songapp do
   @doc """
   Busca informações sobre uma música específica com base em uma consulta.
 
-  ## Parâmetros
-
-    - `query`: Uma string contendo a consulta de busca da música.
-
   ## Exemplos
-
-      iex> Songapp.search_song("Never Gonna Give You Up")
-      {:ok,
-       %{
-         title: "Never Gonna Give You Up",
-         artist: "Rick Astley",
-         release_date: "July 27, 1987",
-         song_url: "https://genius.com/Rick-astley-never-gonna-give-you-up-lyrics"
-       }}
-
+  iex> Songapp.search_song("Never Gonna Give You Up")
+  {:ok,
+    %{
+      title: "Never Gonna Give You Up",
+      artist: "Rick Astley",
+      release_date: "July 27, 1987",
+      song_url: "https://genius.com/Rick-astley-never-gonna-give-you-up-lyrics"
+    }}
   """
   def search_song(query) do
     search_song(query, [], 0)
@@ -146,14 +147,12 @@ defmodule Songapp do
 
   defp extract_song_info(_), do: []
 
-
   defp find_new_song(songs, retrieved_songs) do
     case Enum.find(songs, fn song -> song not in retrieved_songs end) do
       nil -> :error
       song -> {:ok, song}
     end
   end
-
 
   defp extract_song_info2(%{"response" => %{"hits" => [hit | _]}}) do
     result = hit["result"]
