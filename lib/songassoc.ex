@@ -44,7 +44,7 @@ defmodule SongAssociation do
   defp cadastraJogadores(_org, 0), do: []
 
   defp cadastraJogadores(org, x) do
-    IO.puts("Digite o nome do jogador #{x}: ")
+    IO.puts("Digite o nome do jogador #{org-x+1}: ")
     nome = IO.gets("> ") |> String.trim()
 
     if nome == "" do
@@ -88,24 +88,21 @@ defmodule SongAssociation do
       IO.puts("Entrada inválida, digite artistas/músicas válidos. Rodada perdida.")
       points + 0
     else
-      {flag, lyricsin} = Songapp.get_lyrics(input)
-
-      if flag == :error do
-        IO.puts("Erro ao obter as letras da música. Rodada perdida.")
-        points + 0
-      else
-        lyrics = String.downcase(lyricsin)
-        if String.contains?(lyrics, palavra) do
-          IO.puts("Palavra válida! +1 ponto para #{nome}")
-          # Atualiza o placar do jogador
-          points + 1
-        else
-          IO.puts(
-            "#{palavra} não foi encontrada na letra! #{String.upcase(nome)} perdeu a rodada."
-          )
-
+      case Songapp.get_lyrics(input) do
+        {:error, message} ->
+          IO.puts("#{message}. Rodada perdida.")
           points + 0
-        end
+
+        {:ok, lyricsin} ->
+          lyrics = String.downcase(lyricsin)
+          if String.contains?(lyrics, palavra) do
+            IO.puts("Palavra válida! +1 ponto para #{nome}")
+            points + 1
+          else
+            IO.puts("#{palavra} não foi encontrada na letra! #{String.upcase(nome)} perdeu a rodada.")
+            points + 0
+          end
+        
       end
     end
   end
@@ -119,8 +116,6 @@ defmodule SongAssociation do
           pontos: 0
         }
       end)
-
-    IO.inspect(jogadores)
 
     tabela_pontos = Enum.reduce(jogadores, [], fn map, lista ->
         IO.puts("\nVez de #{map[:nome]}!")

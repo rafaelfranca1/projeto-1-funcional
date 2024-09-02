@@ -18,13 +18,18 @@ defmodule Songapp do
   @api_url2 "https://api.lyrics.ovh/v1"
 
   def get_lyrics(input) do
-    {:ok, mp} = search_song(input)
-    {flag, response} = get_lyrics2(mp)
-
-    if flag == :error do
-      get_lyrics1(mp)
+    {fl, mp} = search_song(input)
+    if fl == :error do
+      {:error, "Música não encontrada"}
     else
-      {flag, response}
+      {flag, response} = get_lyrics2(mp)
+
+      if flag == :error do
+        get_lyrics1(mp)
+      else
+        IO.puts(response)
+        {flag, response}
+      end
     end
   end
 
@@ -75,7 +80,7 @@ defmodule Songapp do
 
   defp search_song(_query, _retrieved_songs, attempts) when attempts >= 8 do
     IO.puts("Número máximo de tentativas atingido. Por gentileza, tente ser mais específico na próxima vez.")
-    {:error, "Número máximo de tentativas atingido. Não foi possível encontrar uma música correspondente."}
+    {:error, "deu ruim"}
   end
 
   defp search_song(query, retrieved_songs, attempts) do
