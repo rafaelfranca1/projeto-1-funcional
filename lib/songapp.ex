@@ -9,7 +9,7 @@ defmodule Songapp do
   """
 
   @api_url "https://api.genius.com/search"
-  @api_key "KA4XOUPd0ERQumuJmB2lE1j24oRF_MOLVjBzB_2QSPibp4d0OEv1awCUsnJSuo0b"
+  @api_key System.get_env("GENIUS_API_KEY")
   @header [{"Authorization", "Bearer #{@api_key}"}]
 
   #Tentativa de outra biblioteca:
@@ -58,7 +58,7 @@ defmodule Songapp do
 
   ## Exemplos
 
-      iex> SongApp.search_song("Never Gonna Give You Up")
+      iex> Songapp.search_song("Never Gonna Give You Up")
       {:ok,
        %{
          title: "Never Gonna Give You Up",
@@ -135,31 +135,6 @@ defmodule Songapp do
       song -> {:ok, song}
     end
   end
-
-  # def search_song(query) do
-  #   encoded_query = URI.encode(query)
-  #   url = "#{@api_url}?q=#{encoded_query}"
-
-  #   case HTTPoison.get(url, @header, follow_redirect: true) do
-  #     {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
-  #       case Poison.decode(body) do
-  #         {:ok, decoded_body} ->
-  #           extract_song_info(decoded_body)
-  #         {:error, error} ->
-  #           IO.puts("Erro ao decodificar JSON: #{inspect(error)}")
-  #           {:error, {:invalid_json, error}}
-  #       end
-
-  #     {:ok, %HTTPoison.Response{status_code: status_code, body: body}} ->
-  #       IO.puts("Erro HTTP: #{status_code}")
-  #       IO.puts("Corpo da Resposta: #{body}")
-  #       {:error, {:http_error, status_code, body}}
-
-  #     {:error, error} ->
-  #       IO.puts("Falha na requisição: #{inspect(error)}")
-  #       {:error, {:request_failed, error}}
-  #   end
-  # end
 
   defp extract_song_info2(%{"response" => %{"hits" => [hit | _]}}) do
     result = hit["result"]
