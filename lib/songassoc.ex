@@ -156,7 +156,7 @@ defmodule SongAssociation do
     # Monta um array de mapas de jogadores[nome-palavras], sem repetições de palavras
     {palavras_j, _} =
       Enum.map_reduce(jogadores, banco, fn nome, acc ->
-        {palavras, novo_banco} = Enum.split(acc |> Enum.shuffle(), 3)
+        {palavras, novo_banco} = Enum.split(acc |> Enum.shuffle(), 5)
         {%{nome => palavras}, novo_banco}
       end)
 
