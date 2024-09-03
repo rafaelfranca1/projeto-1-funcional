@@ -9,7 +9,7 @@ defmodule Songapp do
   """
 
   @api_url "https://api.genius.com/search"
-  @api_key System.get_env("GENIUS_API_KEY")
+  @api_key "qO_fldhYf1O_Z9F01PwR-TH54YEbYCbvj1Yy_7shg15ptHa32EcU1tVEAUK0itj_"
   @header [{"Authorization", "Bearer #{@api_key}"}]
 
   #Tentativa de outra biblioteca:

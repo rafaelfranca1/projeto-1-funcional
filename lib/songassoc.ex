@@ -91,7 +91,9 @@ defmodule SongAssociation do
     input = "#{artista} - #{nome_musica}"
 
     if artista == "" or nome_musica == "" do
-      IO.puts("Entrada inválida, digite artistas/músicas válidos. Rodada perdida.")
+      IO.puts("\n----------------------------------------------------\n")
+      IO.puts(String.upcase("Entrada inválida, digite artistas/músicas válidos. Rodada perdida."))
+      IO.puts("\n----------------------------------------------------\n")
       points + 0
     else
       case Songapp.get_lyrics(input) do
@@ -102,10 +104,14 @@ defmodule SongAssociation do
         {:ok, lyricsin} ->
           lyrics = String.downcase(lyricsin)
           if String.contains?(lyrics, palavra) do
-            IO.puts("Palavra válida! +1 ponto para #{nome}")
+            IO.puts("\n----------------------------------------------------\n")
+            IO.puts(String.upcase("Palavra válida! +1 ponto para #{nome}"))
+            IO.puts("\n----------------------------------------------------\n")
             points + 1
           else
-            IO.puts("#{palavra} não foi encontrada na letra! #{String.upcase(nome)} perdeu a rodada.")
+            IO.puts("\n----------------------------------------------------\n")
+            IO.puts(String.upcase("#{palavra} não foi encontrada na letra! #{String.upcase(nome)} perdeu a rodada."))
+            IO.puts("\n----------------------------------------------------\n")
             points + 0
           end
 
@@ -150,7 +156,7 @@ defmodule SongAssociation do
     # Monta um array de mapas de jogadores[nome-palavras], sem repetições de palavras
     {palavras_j, _} =
       Enum.map_reduce(jogadores, banco, fn nome, acc ->
-        {palavras, novo_banco} = Enum.split(acc |> Enum.shuffle(), 5)
+        {palavras, novo_banco} = Enum.split(acc |> Enum.shuffle(), 3)
         {%{nome => palavras}, novo_banco}
       end)
 
@@ -164,7 +170,8 @@ defmodule SongAssociation do
         head
       end)
 
-    IO.inspect(palavras_jogadores)
+    op = IO.gets("\nDeseja ver o mapa Jogador-Palavra[s/n]? ") |> String.trim
+    if op == "s", do: IO.inspect(palavras_jogadores)
 
     placar_final = porJogador(palavras_jogadores)
     # IO.inspect(placar_final)
