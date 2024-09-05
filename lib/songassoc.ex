@@ -96,7 +96,7 @@ defmodule SongAssociation do
       IO.puts("\n----------------------------------------------------\n")
       points + 0
     else
-      case Songapp.get_lyrics(input) do
+      case SongApp.get_lyrics(input) do
         {:error, message} ->
           IO.puts("#{message}. Rodada perdida.")
           points + 0

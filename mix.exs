@@ -7,29 +7,24 @@ defmodule Songapp.MixProject do
       version: "0.1.0",
       elixir: "~> 1.17",
       start_permanent: Mix.env() == :prod,
-      deps: deps(),
-      escript: escript_config()
+      deps: deps()
     ]
   end
 
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      extra_applications: [:logger, :httpoison, :poison]
+      extra_applications: [:logger]
     ]
-  end
-
-  defp escript_config do
-    [main_module: CLI] # Modifique para o módulo principal correto
   end
 
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:httpoison, "~> 2.1"},
-      {:poison, "~> 5.0"},
+      {:httpoison, "~> 2.2"},
+      {:poison, "~> 6.0"},
       {:floki, "~> 0.36.2"},
-      {:jason, "~> 1.2"},
+      {:jason, "~> 1.4"},
       {:tesla, "~> 1.12"}
     ]
   end

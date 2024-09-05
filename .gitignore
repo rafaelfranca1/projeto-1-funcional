@@ -24,3 +24,6 @@ songapp-*.tar
 
 # Temporary files, for example, from tests.
 /tmp/
+
+# Ignore image files
+/Img/

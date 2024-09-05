@@ -19,31 +19,43 @@ Conheça os desenvolvedores por trás do SongApp e do SongAssociation Game:
 - [Luis Reis](https://github.com/LuisReis09)
 - [Rafael de França](https://github.com/rafaelfranca1)
 
-
 ## Get started 
 
 `mix deps.get`
 
 `iex -S mix`
 
-## top songs music
+## Funcionalidades 
 
-`Rankings.artist_top_songs(`artist name`)`
+### Pesquisar Música
 
-`Rankigns.artist_top_songs(`artist name, musics number`)`  
-`Rankigns.artist_top_songs(`artist name`)`
+* Busque informações sobre uma música específica com base em uma consulta:  
+`SongApp.search_song("artist | music | letter")` 
 
-## pesquisar musica
+* Retorne a letra de uma música:  
+`SongApp.get_lyrics("artist | music | letter")` 
 
-`Songapp.search_song(`artist | music | letter`)`
- - Busca informações sobre uma música específica com base em uma consulta.
+### Rankings
 
-`Songapp.get_lyrics(`artist | music | letter`)`
-- Retorna a letra de uma música.
+* Obtenha as músicas mais populares de um artista:  
+`Rankings.artist_top_songs("artist name")` 
 
-`Songapp.ranking_hoje()`
-- Obtém o ranking de hoje de músicas do site Genius.
+* Obtenha um número específico de músicas populares de um artista:  
+`Rankings.artist_top_songs("artist name", music_number)`
 
-## jogo
+* Obtenha o ranking de músicas do dia no Genius:  
+`SongApp.ranking_hoje()` 
 
+### Jogo
+
+* Inicie o Song Association Game:  
 `SongAssociation.start()`
+
+## Configuração da Chave da API
+
+Para utilizar o SongApp, você precisa configurar a variável de ambiente `GENIUS_API_KEY` com a sua chave da API do Genius. 
+
+### Como configurar
+
+1. Obtenha a chave da API do Genius [aqui](https://genius.com/api-clients).
+2. Defina a variável de ambiente `GENIUS_API_KEY` com a chave obtida.

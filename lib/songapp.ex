@@ -1,4 +1,4 @@
-defmodule Songapp do
+defmodule SongApp do
   @moduledoc """
   O módulo `SongApp` fornece funcionalidades para buscar informações sobre músicas usando a API do Genius.
 
@@ -9,7 +9,7 @@ defmodule Songapp do
   """
 
   @api_url "https://api.genius.com/search"
-  @api_key "qO_fldhYf1O_Z9F01PwR-TH54YEbYCbvj1Yy_7shg15ptHa32EcU1tVEAUK0itj_"
+  @api_key System.get_env("GENIUS_API_KEY")
   @header [{"Authorization", "Bearer #{@api_key}"}]
 
   #Tentativa de outra biblioteca:
@@ -19,7 +19,7 @@ defmodule Songapp do
   Retorna a letra de uma música com base na consulta fornecida.
 
   ## Exemplos
-  iex> Songapp.get_lyrics("Never Gonna Give You Up Rick Astley")
+  iex> SongApp.get_lyrics("Never Gonna Give You Up Rick Astley")
   {:ok, "We're no strangers to love..."}
   """
   def get_lyrics(input) do
@@ -79,7 +79,7 @@ defmodule Songapp do
   Busca informações sobre uma música específica com base em uma consulta.
 
   ## Exemplos
-  iex> Songapp.search_song("Never Gonna Give You Up")
+  iex> SongApp.search_song("Never Gonna Give You Up")
   {:ok,
     %{
       title: "Never Gonna Give You Up",
@@ -259,7 +259,7 @@ defmodule Songapp do
   Obtém o ranking de hoje de músicas do site Genius.
 
   Exemplo:
-  iex> Songapp.ranking_hoje
+  iex> SongApp.ranking_hoje
   [
     %{
       rank: "1",
